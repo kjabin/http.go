@@ -38,12 +38,17 @@ func handleConn(conn net.Conn) error {
 	if req.Method == "GET" && req.Path == "/" {
 		fmt.Fprintf(conn, "HTTP/1.1 200 OK\r\n\r\n")
 	} else if req.Method == "GET" && strings.HasPrefix(req.Path, "/echo") {
-
 		query := strings.SplitN(req.Path[1:], "/", 2)[1]
 		header := make(Header)
 		header.Add("Content-Type", "text/plain")
 		header.Add("Content-Length", strconv.Itoa(len(query)))
 		fmt.Fprintf(conn, "HTTP/1.1 200 OK\r\n%v\r\n%v", header, query)
+	} else if req.Method == "GET" && strings.HasPrefix(req.Path, "/user-agent") {
+		useragent := req.Header.Get("User-Agent")
+		header := make(Header)
+		header.Add("Content-Type", "text/plain")
+		header.Add("Content-Length", strconv.Itoa(len(useragent)))
+		fmt.Fprintf(conn, "HTTP/1.1 200 OK\r\n%v\r\n%v", header, useragent)
 	} else {
 		fmt.Fprintf(conn, "HTTP/1.1 404 Not Found\r\n\r\n")
 	}
@@ -54,6 +59,13 @@ type Header map[string][]string
 
 func (h Header) Add(key, value string) {
 	h[key] = append(h[key], value)
+}
+
+func (h Header) Get(key string) string {
+	if _, ok := h[key]; !ok || len(h[key]) == 0 {
+		return ""
+	}
+	return h[key][0]
 }
 
 func (h Header) String() string {
