@@ -67,10 +67,17 @@ func handleIndex(w *http.ResponseWriter, r *http.Request) {
 
 func handleEcho(w *http.ResponseWriter, r *http.Request) {
 	query := strings.TrimPrefix(r.Path, "/echo/")
-	w.Header().Add("Content-Length", strconv.Itoa(len(query)))
 	w.Header().Add("Content-Type", "text/plain")
+
+	data := []byte(query)
+	encoding, algo, ok := http.ValidEncoding(r.Header.Get("Accept-Encoding"))
+	if ok {
+		w.Header().Add("Content-Encoding", encoding)
+		data = algo(data)
+	}
+	w.Header().Add("Content-Length", strconv.Itoa(len(data)))
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(query))
+	w.Write(data)
 }
 
 func handleUserAgent(w *http.ResponseWriter, r *http.Request) {
