@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/codecrafters-io/http-server-starter-go/http"
+	"github.com/kjabin/http.go/http"
 )
 
 func main() {
