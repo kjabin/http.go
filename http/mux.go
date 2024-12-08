@@ -1,6 +1,8 @@
 package http
 
-import "strings"
+import (
+	"strings"
+)
 
 type HandleFunc func(w *ResponseWriter, r *Request)
 
@@ -22,14 +24,24 @@ func (m *ServeMux) HandleFunc(pattern string, h HandleFunc) {
 }
 
 func (m *ServeMux) Match(r Request) HandleFunc {
+	bestMatch, bestFunc := -1, handleDefault
 	for pattern, f := range m.handlers {
 		p := strings.Split(pattern, " ")
 		method, pattern := p[0], p[1]
-		if method == r.Method && strings.HasPrefix(r.Path, pattern) {
-			return f
+		if method != r.Method {
+			continue
+		}
+		if !strings.HasPrefix(r.Path, pattern) {
+			continue
+		}
+		if strings.HasSuffix(pattern, "/") && pattern != r.Path {
+			continue
+		}
+		if len(pattern) >= bestMatch {
+			bestMatch, bestFunc = len(pattern), f
 		}
 	}
-	return handleDefault
+	return bestFunc
 }
 
 func handleDefault(w *ResponseWriter, r *Request) {

@@ -39,7 +39,6 @@ func (w *ResponseWriter) Write(data []byte) error {
 	if !w.headerSet {
 		w.WriteHeader(200)
 	}
-	fmt.Println(w.headerSet, string(data))
 	_, err := w.conn.Write(data)
 	return err
 }
