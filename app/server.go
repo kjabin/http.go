@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -17,25 +18,28 @@ func main() {
 	}
 	mux.HandleFunc("GET /echo", handleEcho)
 	mux.HandleFunc("GET /user-agent", handleUserAgent)
+	mux.HandleFunc("GET /files", handleFiles)
 	mux.HandleFunc("GET /", handleIndex)
 	mux.HandleFunc("GET ", handleDefault)
-	mux.HandleFunc("GET /files", handleFiles)
 	log.Fatal(s.ListenAndServe())
 }
 
 func handleFiles(w *http.ResponseWriter, r *http.Request) {
-	filename := strings.SplitN(r.Path[1:], "/", 2)[1]
-	if _, err := os.Stat(filename); err != nil {
+	filename := strings.TrimPrefix(r.Path, "/files/")
+	filepath := os.Args[2] + filename
+	if _, err := os.Stat(filepath); err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	data, err := os.ReadFile(filename)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	w.Header().Add("Content-Type", "application/octet-stream")
 	w.Header().Add("Content-Length", strconv.Itoa(len(data)))
+	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 }
 
@@ -44,7 +48,7 @@ func handleIndex(w *http.ResponseWriter, r *http.Request) {
 }
 
 func handleEcho(w *http.ResponseWriter, r *http.Request) {
-	query := strings.SplitN(r.Path[1:], "/", 2)[1]
+	query := strings.TrimPrefix(r.Path, "/echo/")
 	w.Header().Add("Content-Length", strconv.Itoa(len(query)))
 	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
