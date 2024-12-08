@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -21,7 +22,24 @@ func main() {
 	mux.HandleFunc("GET /files", handleFiles)
 	mux.HandleFunc("GET /", handleIndex)
 	mux.HandleFunc("GET ", handleDefault)
+	mux.HandleFunc("POST ", handleFilesPOST)
 	log.Fatal(s.ListenAndServe())
+}
+
+func handleFilesPOST(w *http.ResponseWriter, r *http.Request) {
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	filename := os.Args[2] + strings.TrimPrefix(r.Path, "/files/")
+	filepath := filename
+	err = os.WriteFile(filepath, data, 411)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 }
 
 func handleFiles(w *http.ResponseWriter, r *http.Request) {
